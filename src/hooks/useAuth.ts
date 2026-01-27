@@ -1,115 +1,133 @@
 import { useState, useEffect } from 'react';
-import { getSettings } from '../services/api';
 
-interface User {
-    name: string;
-    picture: string;
-    accessToken: string;
+// Define the User type strictly
+export interface User {
     id: string;
+    name: string;
+    email?: string;
+    phone?: string;
+    accessToken?: string; // JWT from backend
+    picture?: string; // Optional, might be added later
 }
+
+
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export const useAuth = () => {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [isSdkLoaded, setIsSdkLoaded] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        // Load saved session
-        const savedUser = localStorage.getItem('auth_user');
-        if (savedUser) {
-            setUser(JSON.parse(savedUser));
-        }
-        setIsLoading(false);
-
-        // Load FB SDK
-        const loadSdk = async () => {
-            const settings = await getSettings();
-            if (!settings.appId) return;
-
-            // @ts-ignore
-            window.fbAsyncInit = function () {
-                // @ts-ignore
-                window.FB.init({
-                    appId: settings.appId,
-                    cookie: true,
-                    xfbml: true,
-                    version: 'v18.0'
-                });
-                setIsSdkLoaded(true);
-            };
-
-            (function (d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) { return; }
-                js = d.createElement(s); js.id = id;
-                // @ts-ignore
-                js.src = "https://connect.facebook.net/en_US/sdk.js";
-                // @ts-ignore
-                fjs.parentNode.insertBefore(js, fjs);
-            }(document, 'script', 'facebook-jssdk'));
-        };
-
-        loadSdk();
+        checkAuth();
     }, []);
 
-    const login = () => {
-        // Bypass for localhost to avoid HTTPS requirement
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            console.log("Localhost detected: using Guest Login bypass.");
-            loginGuest();
+    const checkAuth = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            setIsLoading(false);
             return;
         }
 
-        if (!isSdkLoaded) {
-            alert("SDK do Facebook ainda não carregou ou App ID não configurado.");
-            return;
-        }
+        try {
+            const response = await fetch(`${API_URL}/auth/me`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
 
-        // @ts-ignore
-        window.FB.login((response) => {
-            if (response.authResponse) {
-                const accessToken = response.authResponse.accessToken;
-
-                // Fetch User Profile
-                // @ts-ignore
-                window.FB.api('/me', { fields: 'name, picture' }, (profileResponse) => {
-                    const newUser: User = {
-                        name: profileResponse.name,
-                        picture: profileResponse.picture?.data?.url || '',
-                        accessToken: accessToken,
-                        id: profileResponse.id
-                    };
-
-                    setUser(newUser);
-                    localStorage.setItem('auth_user', JSON.stringify(newUser));
-                });
+            if (response.ok) {
+                const data = await response.json();
+                setUser({ ...data.user, accessToken: token });
             } else {
-                console.log('User cancelled login or did not fully authorize.');
+                logout();
             }
-        }, { scope: 'public_profile,pages_show_list,instagram_basic,pages_read_engagement' });
+        } catch (err) {
+            console.error('Auth check failed:', err);
+            logout();
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const login = async (identifier: string, password: string) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const response = await fetch(`${API_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ identifier, password }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Falha no login');
+            }
+
+            localStorage.setItem('token', data.token);
+            setUser({ ...data.user, accessToken: data.token });
+            return true;
+        } catch (err: any) {
+            setError(err.message);
+            return false;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const register = async (name: string, password: string, email?: string, phone?: string) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const response = await fetch(`${API_URL}/auth/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, password, email, phone }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Falha no cadastro');
+            }
+
+            localStorage.setItem('token', data.token);
+            setUser({ ...data.user, accessToken: data.token });
+            return true;
+        } catch (err: any) {
+            setError(err.message);
+            return false;
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const loginGuest = () => {
+        // kept for backward compatibility if needed, but primarily we want real auth now
         const guestUser: User = {
-            name: "Admin Local",
-            picture: "https://api.dicebear.com/7.x/avataaars/svg?seed=admin",
-            accessToken: "guest-token",
-            id: "guest-id"
+            id: 'guest',
+            name: 'Convidado',
+            accessToken: 'guest-token'
         };
         setUser(guestUser);
-        localStorage.setItem('auth_user', JSON.stringify(guestUser));
+        localStorage.setItem('token', 'guest-token');
     };
 
     const logout = () => {
+        localStorage.removeItem('token');
         setUser(null);
-        localStorage.removeItem('auth_user');
     };
 
     return {
         user,
         isAuthenticated: !!user,
         isLoading,
+        error,
         login,
+        register,
         loginGuest,
         logout
     };

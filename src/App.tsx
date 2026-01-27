@@ -21,7 +21,7 @@ import {
 import './App.css';
 
 function App() {
-  const { user, isAuthenticated, isLoading: isAuthLoading, login, loginGuest, logout } = useAuth();
+  const { user, isAuthenticated, isLoading: isAuthLoading, login, register, loginGuest, logout } = useAuth();
   const [activeView, setActiveView] = useState('dashboard');
   const [posts, setPosts] = useState<Post[]>([]);
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
@@ -168,7 +168,7 @@ function App() {
   }
 
   if (!isAuthenticated) {
-    return <Login onLogin={login} onLoginGuest={loginGuest} />;
+    return <Login onLogin={login} onRegister={register} onLoginGuest={loginGuest} />;
   }
 
   return (

@@ -1,78 +1,224 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
+
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from './ui/card';
 import { Button } from './ui/button';
-import { Instagram, Facebook, ShieldCheck } from 'lucide-react';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { ShieldCheck, Mail, Lock, Phone, User as UserIcon, Loader2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 
 interface LoginProps {
-    onLogin: () => void;
+    onLogin: (identifier: string, password: string) => Promise<boolean>;
+    onRegister: (name: string, password: string, email?: string, phone?: string) => Promise<boolean>;
     onLoginGuest: () => void;
 }
 
-export const Login: React.FC<LoginProps> = ({ onLogin, onLoginGuest }) => {
+export const Login: React.FC<LoginProps> = ({ onLogin, onRegister, onLoginGuest }) => {
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    // Form States
+    const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
+    const [password, setPassword] = useState('');
+    const [name, setName] = useState('');
+
+    const handleSubmitLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        setIsLoading(true);
+
+        const identifier = email || phone;
+        if (!identifier || !password) {
+            setError('Preencha os campos obrigatórios.');
+            setIsLoading(false);
+            return;
+        }
+
+        try {
+            const success = await onLogin(identifier, password);
+            if (!success) {
+                // Error is handled by calling component or hook usually, but here we can set generic
+                // Actually useAuth sets internal error but returns boolean.
+                // For better UX, useAuth could throw or return error string.
+                // Assuming boolean false means generic error for now if not captured globally.
+                setError('Credenciais inválidas ou erro no servidor.');
+            }
+        } catch (err) {
+            setError('Ocorreu um erro ao tentar entrar.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleSubmitRegister = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        setIsLoading(true);
+
+        if (!name || !password || (!email && !phone)) {
+            setError('Preencha os campos obrigatórios.');
+            setIsLoading(false);
+            return;
+        }
+
+        try {
+            const success = await onRegister(name, password, email, phone);
+            if (!success) {
+                setError('Falha ao cadastrar. Verifique os dados ou tente outro email/telefone.');
+            }
+        } catch (err) {
+            setError('Ocorreu um erro ao cadastrar.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen flex items-center justify-center p-4 bg-background relative overflow-hidden">
-            {/* Background Effects */}
             <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-primary/20 blur-[100px] pointer-events-none" />
             <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-secondary/20 blur-[100px] pointer-events-none" />
 
             <Card className="w-full max-w-md border-primary/20 shadow-2xl backdrop-blur-sm bg-card/80">
-                <CardHeader className="text-center space-y-4 pb-8">
-                    <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/20 mb-2">
-                        <ShieldCheck className="text-white w-8 h-8" />
+                <CardHeader className="text-center space-y-4 pb-2">
+                    <div className="mx-auto w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/20">
+                        <ShieldCheck className="text-white w-6 h-6" />
                     </div>
                     <div>
-                        <CardTitle className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
+                        <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
                             Social Spark
                         </CardTitle>
-                        <CardDescription className="text-base mt-2">
-                            Gerenciador profissional para redes sociais
+                        <CardDescription>
+                            Acesse sua conta para continuar
                         </CardDescription>
                     </div>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                    <div className="space-y-4">
-                        <Button
-                            className="w-full h-12 text-base font-medium shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
-                            onClick={onLogin}
+
+                <Tabs defaultValue="login" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 px-6">
+                        <TabsTrigger value="login">Entrar</TabsTrigger>
+                        <TabsTrigger value="register">Cadastrar</TabsTrigger>
+                    </TabsList>
+
+                    <CardContent className="pt-6">
+                        <TabsContent value="login">
+                            <form onSubmit={handleSubmitLogin} className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="login-identifier">Email ou Telefone</Label>
+                                    <div className="relative">
+                                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                            id="login-identifier"
+                                            placeholder="exemplo@email.com"
+                                            className="pl-9"
+                                            value={email} // Simpler to just use email state for identifier input for now, or unified state
+                                            onChange={(e) => setEmail(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <Label htmlFor="login-password">Senha</Label>
+                                    </div>
+                                    <div className="relative">
+                                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                            id="login-password"
+                                            type="password"
+                                            className="pl-9"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+
+                                {error && <p className="text-sm text-red-500 font-medium">{error}</p>}
+
+                                <Button type="submit" className="w-full" disabled={isLoading}>
+                                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                    Entrar
+                                </Button>
+                            </form>
+                        </TabsContent>
+
+                        <TabsContent value="register">
+                            <form onSubmit={handleSubmitRegister} className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="reg-name">Nome Completo</Label>
+                                    <div className="relative">
+                                        <UserIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                            id="reg-name"
+                                            placeholder="Seu nome"
+                                            className="pl-9"
+                                            value={name}
+                                            onChange={(e) => setName(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="reg-email">Email</Label>
+                                    <div className="relative">
+                                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                            id="reg-email"
+                                            type="email"
+                                            placeholder="seumail@exemplo.com"
+                                            className="pl-9"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="reg-phone">Telefone (Opcional)</Label>
+                                    <div className="relative">
+                                        <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                            id="reg-phone"
+                                            placeholder="+55..."
+                                            className="pl-9"
+                                            value={phone}
+                                            onChange={(e) => setPhone(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="reg-password">Senha</Label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                            id="reg-password"
+                                            type="password"
+                                            className="pl-9"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+
+                                {error && <p className="text-sm text-red-500 font-medium">{error}</p>}
+
+                                <Button type="submit" className="w-full" disabled={isLoading}>
+                                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                    Criar Conta
+                                </Button>
+                            </form>
+                        </TabsContent>
+                    </CardContent>
+
+                    <CardFooter className="justify-center border-t p-4 bg-muted/20">
+                        <button
+                            onClick={onLoginGuest}
+                            className="text-xs text-muted-foreground hover:text-primary transition-colors underline decoration-dotted underline-offset-4"
                         >
-                            <Instagram className="mr-2 w-5 h-5" />
-                            Entrar com Instagram
-                        </Button>
-
-                        <div className="relative">
-                            <div className="absolute inset-0 flex items-center">
-                                <span className="w-full border-t" />
-                            </div>
-                            <div className="relative flex justify-center text-xs uppercase">
-                                <span className="bg-card px-2 text-muted-foreground">Ou</span>
-                            </div>
-                        </div>
-
-                        <Button
-                            variant="outline"
-                            className="w-full h-12 text-base font-medium"
-                            onClick={onLogin}
-                        >
-                            <Facebook className="mr-2 w-5 h-5 text-blue-600" />
-                            Entrar com Facebook
-                        </Button>
-
-                        <div className="relative pt-2">
-                            <div className="relative flex justify-center text-xs">
-                                <button
-                                    onClick={onLoginGuest}
-                                    className="text-muted-foreground hover:text-primary transition-colors underline decoration-dotted underline-offset-4"
-                                >
-                                    Login sem autenticação (Modo Desenvolvedor)
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <p className="text-xs text-center text-muted-foreground px-4 leading-relaxed">
-                        Ao continuar, você concorda em conectar sua conta do Meta para permitir o gerenciamento de suas postagens.
-                    </p>
-                </CardContent>
+                            Modo Desenvolvedor (Guest)
+                        </button>
+                    </CardFooter>
+                </Tabs>
             </Card>
         </div>
     );

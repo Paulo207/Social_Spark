@@ -185,6 +185,9 @@ model Post {
   status        String
   publishedAt   DateTime?
   createdAt     DateTime  @default(now())
+  
+  userId        String?
+  user          User?     @relation(fields: [userId], references: [id])
 }
 
 model Account {
@@ -197,6 +200,20 @@ model Account {
   accessToken     String?
   originalResponse String // Stored as JSON string (includes pageId and igUserId)
   tokenExpiresAt DateTime?
+  
+  userId        String?
+  user          User?     @relation(fields: [userId], references: [id])
+}
+
+model User {
+  id         String    @id @default(uuid())
+  email      String?   @unique
+  phone      String?   @unique
+  password   String
+  name       String
+  accounts   Account[]
+  posts      Post[]
+  createdAt  DateTime  @default(now())
 }
 
 model Settings {
