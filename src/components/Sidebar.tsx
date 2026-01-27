@@ -17,7 +17,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isDa
         { id: 'calendar', label: 'Calendário', icon: Calendar },
         { id: 'posts', label: 'Postagens', icon: FileText },
         { id: 'accounts', label: 'Contas', icon: Users },
-        { id: 'settings', label: 'Configurações', icon: Settings },
+        // Only show Settings if user is a developer
+        ...(user?.role === 'developer' ? [{ id: 'settings', label: 'Configurações', icon: Settings }] : []),
     ];
 
     return (

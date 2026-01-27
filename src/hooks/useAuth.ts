@@ -8,6 +8,7 @@ export interface User {
     phone?: string;
     accessToken?: string; // JWT from backend
     picture?: string; // Optional, might be added later
+    role?: string; // 'user' | 'developer'
 }
 
 

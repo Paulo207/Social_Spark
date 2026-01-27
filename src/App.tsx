@@ -153,6 +153,11 @@ function App() {
           />
         );
       case 'settings':
+        // Protect the settings route
+        if (user?.role !== 'developer') {
+          setActiveView('dashboard'); // Redirect if not developer
+          return <Dashboard posts={posts} onCreatePost={() => setIsComposerOpen(true)} />;
+        }
         return <Settings />;
       default:
         return <Dashboard posts={posts} onCreatePost={() => setIsComposerOpen(true)} />;
