@@ -83,28 +83,22 @@ export const initializeStorage = async (): Promise<void> => {
 // So: Client MUST upload to Cloudinary --> Update Post with URL --> Save --> Publish.
 
 export const uploadToCloudinary = async (file: File): Promise<string> => {
-    const settings = await storage.getSettings();
-    const cloudName = settings.cloudinaryCloudName;
-    const uploadPreset = settings.cloudinaryUploadPreset;
-
-    if (!cloudName || !uploadPreset) {
-        throw new Error('Configuração do Cloudinary ausente. Configure o Cloud Name e o Upload Preset nas configurações.');
-    }
+    // Determine API URL (should be same logic as apiRequest, but we need FormData)
+    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', uploadPreset);
 
-    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+    const response = await fetch(`${API_BASE}/upload`, {
         method: 'POST',
         body: formData
     });
 
     if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error?.message || 'Erro ao hospedar mídia no Cloudinary');
+        const error = await response.json().catch(() => ({ error: 'Upload failed' }));
+        throw new Error(error.error || 'Erro ao hospedar mídia (Backend)');
     }
 
     const data = await response.json();
-    return data.secure_url;
+    return data.url; // secure_url from backend
 };
