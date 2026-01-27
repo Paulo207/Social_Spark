@@ -56,10 +56,13 @@ export const useAuth = () => {
         setIsLoading(true);
         setError(null);
         try {
+            const cleanIdentifier = identifier.trim();
+            const cleanPassword = password.trim();
+
             const response = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ identifier, password }),
+                body: JSON.stringify({ identifier: cleanIdentifier, password: cleanPassword }),
             });
 
             const data = await response.json();
