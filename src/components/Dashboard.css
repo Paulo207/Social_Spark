@@ -1,0 +1,200 @@
+.dashboard {
+    padding: var(--spacing-xl);
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-2xl);
+}
+
+.dashboard-subtitle {
+    color: var(--color-text-muted);
+    margin-top: var(--spacing-xs);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-2xl);
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-xl);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-label {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-xs);
+}
+
+.stat-value {
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    margin: 0;
+    line-height: 1.1;
+}
+
+.recent-posts {
+    position: relative;
+    overflow: hidden;
+}
+
+.recent-posts h3 {
+    margin-bottom: var(--spacing-lg);
+}
+
+.posts-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.post-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--color-border);
+    transition: all var(--transition-base);
+}
+
+.post-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--color-border-light);
+    transform: translateY(-2px);
+}
+
+.post-thumbnail {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+    flex-shrink: 0;
+    box-shadow: var(--shadow-sm);
+}
+
+.post-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.post-caption {
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-xs);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: var(--font-weight-medium);
+}
+
+.post-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+
+.post-platform {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    opacity: 0.8;
+}
+
+.post-status {
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-3xl) var(--spacing-lg);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-lg);
+    border: 1px dashed var(--color-border);
+}
+
+.empty-state p {
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-lg);
+    font-size: var(--font-size-lg);
+}
+
+@media (max-width: 768px) {
+    .dashboard {
+        padding: var(--spacing-md);
+        padding-top: var(--spacing-xl);
+    }
+
+    .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .dashboard-header button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .stats-grid {
+        gap: var(--spacing-md);
+    }
+
+    .stat-card {
+        padding: var(--spacing-lg);
+    }
+
+    .post-item {
+        padding: var(--spacing-sm);
+    }
+
+    .post-thumbnail {
+        width: 50px;
+        height: 50px;
+    }
+
+    .post-caption {
+        font-size: var(--font-size-sm);
+    }
+
+    .post-status {
+        padding: 0.25rem 0.5rem;
+        font-size: 10px;
+    }
+}
