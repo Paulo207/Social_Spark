@@ -83,11 +83,14 @@ export const initializeStorage = async (): Promise<void> => {
 // So: Client MUST upload to Cloudinary --> Update Post with URL --> Save --> Publish.
 
 export const uploadToCloudinary = async (file: File): Promise<string> => {
-    // Determine API URL (should be same logic as apiRequest, but we need FormData)
-    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+    // Determine API URL 
+    const VITE_API_URL = import.meta.env.VITE_API_URL;
+    const API_BASE = VITE_API_URL ? `${VITE_API_URL}/api` : 'http://localhost:3000/api';
 
     const formData = new FormData();
     formData.append('file', file);
+
+    console.log(`[API] Uploading to ${API_BASE}/upload...`);
 
     const response = await fetch(`${API_BASE}/upload`, {
         method: 'POST',
@@ -95,10 +98,28 @@ export const uploadToCloudinary = async (file: File): Promise<string> => {
     });
 
     if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Upload failed' }));
-        throw new Error(error.error || 'Erro ao hospedar mídia (Backend)');
+        let errorMsg = 'Erro ao hospedar mídia (Backend)';
+        try {
+            const error = await response.json();
+            errorMsg = error.error || errorMsg;
+        } catch (e) {
+            errorMsg = `${errorMsg}: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMsg);
     }
 
     const data = await response.json();
     return data.url; // secure_url from backend
+};
+
+export const checkBackendConnection = async (): Promise<boolean> => {
+    const VITE_API_URL = import.meta.env.VITE_API_URL;
+    const API_BASE = VITE_API_URL ? `${VITE_API_URL}/api` : 'http://localhost:3000/api';
+
+    try {
+        const response = await fetch(`${API_BASE}/posts`);
+        return response.ok;
+    } catch (e) {
+        return false;
+    }
 };

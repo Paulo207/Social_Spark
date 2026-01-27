@@ -48,7 +48,7 @@ const uploadToCloudinary = (buffer: Buffer, mimetype: string): Promise<any> => {
     });
 };
 
-router.post('/', (req, res) => {
+router.post('/upload', (req, res) => {
     upload(req, res, async (err) => {
         if (err instanceof multer.MulterError) {
             console.error('Multer Error:', err);
