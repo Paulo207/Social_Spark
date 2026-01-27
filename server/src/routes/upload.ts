@@ -22,14 +22,25 @@ cloudinary.config({
 // Helper to upload stream
 const uploadToCloudinary = (buffer: Buffer, mimetype: string): Promise<any> => {
     return new Promise((resolve, reject) => {
-        // Use 'auto' to let Cloudinary detect
+        // Prepare upload options
+        const options: any = {
+            resource_type: 'auto',
+        };
+
+        // Only include upload_preset if it exists and we're NOT doing a signed upload
+        // or if specifically required by the user configuration. 
+        // For signed uploads (using API Key/Secret), upload_preset is often not needed or can cause conflict.
+        if (process.env.CLOUDINARY_UPLOAD_PRESET && process.env.CLOUDINARY_UPLOAD_PRESET !== 'ml_default') {
+            options.upload_preset = process.env.CLOUDINARY_UPLOAD_PRESET;
+        }
+
         const uploadStream = cloudinary.uploader.upload_stream(
-            {
-                resource_type: 'auto',
-                upload_preset: process.env.CLOUDINARY_UPLOAD_PRESET
-            },
+            options,
             (error, result) => {
-                if (error) return reject(error);
+                if (error) {
+                    console.error('Cloudinary stream error:', error);
+                    return reject(error);
+                }
                 resolve(result);
             }
         );

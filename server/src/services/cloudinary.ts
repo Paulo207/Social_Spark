@@ -34,12 +34,22 @@ export const cloudinaryService = {
                 console.log(`[Cloudinary] Uploading Base64 media for post ${post.id}...`);
 
                 try {
-                    // Upload using Cloudinary SDK
-                    // It accepts base64 data URIs directly
-                    const result = await cloudinary.uploader.upload(img, {
+                    // Prepare upload options
+                    const options: any = {
                         resource_type: "auto",
-                        upload_preset: settings?.cloudinaryUploadPreset || process.env.CLOUDINARY_UPLOAD_PRESET // Optional for signed, but good practice if defined
-                    });
+                    };
+
+                    // Only include upload_preset if it exists and we're NOT doing a signed upload
+                    // or if specifically required by the user configuration.
+                    const preset = settings?.cloudinaryUploadPreset || process.env.CLOUDINARY_UPLOAD_PRESET;
+                    if (preset && preset !== 'ml_default') {
+                        options.upload_preset = preset;
+                    }
+
+                    console.log(`[Cloudinary] Uploading media with options:`, { resource_type: options.resource_type, hasPreset: !!options.upload_preset });
+
+                    // Upload using Cloudinary SDK
+                    const result = await cloudinary.uploader.upload(img, options);
 
                     console.log(`[Cloudinary] Upload success: ${result.secure_url}`);
 
