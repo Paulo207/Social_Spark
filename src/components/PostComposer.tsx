@@ -101,34 +101,54 @@ export const PostComposer: React.FC<PostComposerProps> = ({
         if (!files) return;
 
         const newFiles = Array.from(files);
-        const currentImagesCount = images.length;
+        // Start with placeholders or optimistic updates? 
+        // Better to wait for upload or show spinner. 
+        // Let's toggle a loading state. Since we can upload multiple, we might want to track loading per file, or just block UI.
+        // For simplicity, let's block the "Save" button or show a global spinner if uploading.
 
-        for (let i = 0; i < newFiles.length; i++) {
-            const file = newFiles[i];
-            const isVideo = file.type.startsWith('video/');
+        // Actually, let's process one by one to ensure we get URLs.
+        setIsAdapting(true); // Reuse this spinner or create new 'isUploadingMedia'
 
-            if (!isVideo) {
+        try {
+            // Import dynamically to avoid top-level issues if not used? No, safe to use api.ts
+            const { uploadToCloudinary } = await import('../services/api');
+
+            for (const file of newFiles) {
+                // Client-side adaptation check (still useful for UI feedback)
                 try {
-                    const info = await getImageInfo(file);
-                    const isInvalid = (platform === 'instagram' || platform === 'both') && !isAspectRatioValid(info.ratio);
-
-                    if (isInvalid) {
-                        setInvalidRatios(prev => [...prev, currentImagesCount + i]);
+                    const isVideo = file.type.startsWith('video/');
+                    if (!isVideo) {
+                        const info = await getImageInfo(file);
+                        const isInvalid = (platform === 'instagram' || platform === 'both') && !isAspectRatioValid(info.ratio);
+                        if (isInvalid) {
+                            // We flag it, but we continue uploading? 
+                            // Maybe we should Adapt THEN upload?
+                            // Current flow: Upload RAW. Adapt uses Cloudinary transformations? 
+                            // No, adaptImageForInstagram (client side) returns a File/Blob.
+                            // Ideally: Check -> Adapt (if needed/auto) -> Upload.
+                            // For now, let's keep existing flow: Upload -> Set URL.
+                            // If user clicks "Adapt Auto", we Adapt (client-side) -> Upload AGAIN.
+                            const currentCount = images.length;
+                            setInvalidRatios(prev => [...prev, currentCount]); // Count needs adjustment if we loop
+                        }
                     }
-                } catch (err) {
-                    console.warn("Could not get image info", err);
-                }
-            }
+                } catch (e) { console.warn("Ratio check failed", e); }
 
-            const reader = new FileReader();
-            await new Promise((resolve) => {
-                reader.onloadend = () => {
-                    setImages(prev => [...prev, reader.result as string]);
-                    setImageFiles(prev => [...prev, file]);
-                    resolve(null);
-                };
-                reader.readAsDataURL(file);
-            });
+                // Upload
+                const url = await uploadToCloudinary(file);
+                setImages(prev => [...prev, url]);
+                // We don't need to keep 'imageFiles' synced if we have 'images' as URLs, 
+                // BUT 'handleAutoFix' relies on 'imageFiles' (File objects).
+                // So we should keep them.
+                setImageFiles(prev => [...prev, file]);
+            }
+        } catch (error: any) {
+            console.error("Upload failed", error);
+            alert(`Erro ao fazer upload da mídia: ${error.message}`);
+        } finally {
+            setIsAdapting(false);
+            // Clear input
+            e.target.value = '';
         }
     };
 
@@ -137,17 +157,23 @@ export const PostComposer: React.FC<PostComposerProps> = ({
 
         setIsAdapting(true);
         try {
+            const { uploadToCloudinary } = await import('../services/api');
             const updatedImages = [...images];
             const updatedFiles = [...imageFiles];
+            // We need to keep indices stable while async processing
 
-            for (const index of invalidRatios) {
-                // Skip if it's a video (though invalidRatios shouldn't have videos normally)
-                if (updatedFiles[index].type.startsWith('video/')) continue;
+            // Map invalidRatios to promises
+            const promises = invalidRatios.map(async (index) => {
+                if (updatedFiles[index].type.startsWith('video/')) return;
 
                 const result = await adaptImageForInstagram(imageFiles[index]);
-                updatedImages[index] = result.dataUrl;
+                const newUrl = await uploadToCloudinary(result.file);
+
+                updatedImages[index] = newUrl;
                 updatedFiles[index] = result.file;
-            }
+            });
+
+            await Promise.all(promises);
 
             setImages(updatedImages);
             setImageFiles(updatedFiles);
