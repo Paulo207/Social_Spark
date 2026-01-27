@@ -31,6 +31,14 @@ export const useAuth = () => {
             return;
         }
 
+        // Validate token format (simple check for JWT structure or known legacy values)
+        if (token === 'guest-token' || token.split('.').length !== 3) {
+            console.log('Invalid or legacy token found, clearing session.');
+            logout();
+            setIsLoading(false);
+            return;
+        }
+
         try {
             const response = await fetch(`${API_URL}/auth/me`, {
                 headers: {
@@ -52,7 +60,7 @@ export const useAuth = () => {
         }
     };
 
-    const login = async (identifier: string, password: string) => {
+    const login = async (identifier: string, password: string): Promise<User | null> => {
         setIsLoading(true);
         setError(null);
         try {
@@ -72,11 +80,12 @@ export const useAuth = () => {
             }
 
             localStorage.setItem('token', data.token);
-            setUser({ ...data.user, accessToken: data.token });
-            return true;
+            const userData = { ...data.user, accessToken: data.token }; // Ensure userData is constructed
+            setUser(userData);
+            return userData;
         } catch (err: any) {
             setError(err.message);
-            return false;
+            return null;
         } finally {
             setIsLoading(false);
         }

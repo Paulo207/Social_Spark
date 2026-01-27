@@ -172,8 +172,19 @@ function App() {
     );
   }
 
+  const handleLogin = async (identifier: string, password: string) => {
+    const loggedUser = await login(identifier, password);
+    if (loggedUser) {
+      if (loggedUser.role === 'developer') {
+        setActiveView('settings');
+      }
+      return true;
+    }
+    return false;
+  };
+
   if (!isAuthenticated) {
-    return <Login onLogin={login} onRegister={register} onLoginGuest={loginGuest} />;
+    return <Login onLogin={handleLogin} onRegister={register} onLoginGuest={loginGuest} />;
   }
 
   return (
