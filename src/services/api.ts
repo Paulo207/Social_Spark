@@ -27,8 +27,15 @@ export const publishPostNow = async (postId: string): Promise<Post> => {
 
     // We call the backend endpoint
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const token = localStorage.getItem('token');
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${apiUrl}/api/posts/${postId}/publish`, {
-        method: 'POST'
+        method: 'POST',
+        headers
     });
 
     if (!response.ok) {
@@ -92,8 +99,15 @@ export const uploadToCloudinary = async (file: File): Promise<string> => {
 
     console.log(`[API] Uploading to ${API_BASE}/upload...`);
 
+    const token = localStorage.getItem('token');
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${API_BASE}/upload`, {
         method: 'POST',
+        headers,
         body: formData
     });
 
@@ -117,9 +131,39 @@ export const checkBackendConnection = async (): Promise<boolean> => {
     const API_BASE = VITE_API_URL ? `${VITE_API_URL}/api` : 'http://localhost:3000/api';
 
     try {
-        const response = await fetch(`${API_BASE}/posts`);
+        const token = localStorage.getItem('token');
+        const headers: HeadersInit = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        const response = await fetch(`${API_BASE}/posts`, { headers });
         return response.ok;
     } catch (e) {
         return false;
     }
+};
+
+export const generateCaption = async (topic: string, platform: 'instagram' | 'facebook' | 'both'): Promise<string> => {
+    const VITE_API_URL = import.meta.env.VITE_API_URL;
+    const API_BASE = VITE_API_URL ? `${VITE_API_URL}/api` : 'http://localhost:3000/api';
+
+    const token = localStorage.getItem('token');
+    const headers: HeadersInit = { 'Content-Type': 'application/json' };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE}/ai/generate-caption`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ topic, platform })
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to generate caption');
+    }
+
+    const data = await response.json();
+    return data.caption;
 };

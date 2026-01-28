@@ -2,7 +2,8 @@
 import type { Post, SocialAccount } from '../types';
 
 // API Configuration
-const API_URL = 'http://localhost:3000/api';
+// API Configuration
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api';
 
 export interface AppSettings {
     appId: string;
@@ -14,8 +15,14 @@ export interface AppSettings {
 
 // --- HELPER FETCH WRAPPER ---
 async function apiRequest<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    const token = localStorage.getItem('token');
+    const headers: HeadersInit = { 'Content-Type': 'application/json' };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${API_URL}${endpoint}`, {
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         ...options
     });
 

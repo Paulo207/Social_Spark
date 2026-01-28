@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import type { Post, Platform, SocialAccount } from '../types';
 import { format } from 'date-fns';
-import { savePost, publishPostNow } from '../services/api';
+import { savePost, publishPostNow, generateCaption } from '../services/api';
 import { adaptImageForInstagram, getImageInfo, isAspectRatioValid } from '../utils/imageProcessor';
 import { AlertCircle, Wand2, AlertTriangle } from 'lucide-react';
 import { isPast } from 'date-fns';
@@ -64,6 +64,7 @@ export const PostComposer: React.FC<PostComposerProps> = ({
     const [imageFiles, setImageFiles] = useState<File[]>([]);
     const [invalidRatios, setInvalidRatios] = useState<number[]>([]);
     const [isAdapting, setIsAdapting] = useState(false);
+    const [isGeneratingAi, setIsGeneratingAi] = useState(false);
 
     const connectedAccounts = useMemo(() => accounts.filter(a => a.isConnected), [accounts]);
     const availableAccounts = useMemo(() => {
@@ -378,7 +379,45 @@ export const PostComposer: React.FC<PostComposerProps> = ({
 
                             {/* Caption */}
                             <div className="space-y-2">
-                                <Label>Legenda</Label>
+                                <div className="flex justify-between items-center">
+                                    <Label>Legenda</Label>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-6 text-xs gap-1 text-primary hover:text-primary/80"
+                                        onClick={async () => {
+                                            if (!caption && !editPost) {
+                                                const topic = prompt('Sobre o que você quer escrever?');
+                                                if (!topic) return;
+
+                                                setIsGeneratingAi(true);
+                                                try {
+                                                    const aiCaption = await generateCaption(topic, platform);
+                                                    setCaption(aiCaption);
+                                                } catch (e: any) {
+                                                    alert(e.message);
+                                                } finally {
+                                                    setIsGeneratingAi(false);
+                                                }
+                                            } else {
+                                                const topic = prompt('Refazer legenda sobre o que? (Deixe vazio para usar a legenda atual como base)', caption);
+                                                setIsGeneratingAi(true);
+                                                try {
+                                                    const aiCaption = await generateCaption(topic || caption, platform);
+                                                    setCaption(aiCaption);
+                                                } catch (e: any) {
+                                                    alert(e.message);
+                                                } finally {
+                                                    setIsGeneratingAi(false);
+                                                }
+                                            }
+                                        }}
+                                        disabled={isGeneratingAi}
+                                    >
+                                        {isGeneratingAi ? <Loader2 size={12} className="animate-spin" /> : <Wand2 size={12} />}
+                                        {isGeneratingAi ? 'Gerando...' : 'Gerar com IA'}
+                                    </Button>
+                                </div>
                                 <Textarea
                                     placeholder="Escreva sua legenda..."
                                     value={caption}

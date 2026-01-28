@@ -164,7 +164,28 @@ function App() {
     }
   };
 
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+      </div>
+    );
+  }
 
+  const handleLogin = async (identifier: string, password: string) => {
+    const loggedUser = await login(identifier, password);
+    if (loggedUser) {
+      if (loggedUser.role === 'developer') {
+        setActiveView('settings');
+      }
+      return true;
+    }
+    return false;
+  };
+
+  if (!isAuthenticated) {
+    return <Login onLogin={handleLogin} onRegister={register} onLoginGuest={loginGuest} />;
+  }
 
   return (
     <div className="app">

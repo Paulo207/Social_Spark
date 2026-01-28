@@ -7,10 +7,13 @@ import { socialService } from './services/social';
 import { TokenMonitorService } from './services/tokenMonitor';
 import { cloudinaryService } from './services/cloudinary';
 import dotenv from 'dotenv';
+import { authenticateToken, AuthRequest } from './middleware/auth';
+
 dotenv.config();
 
 import authRoutes from './routes/auth';
 import uploadRoutes from './routes/upload';
+import aiRoutes from './routes/ai';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -35,12 +38,17 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api', uploadRoutes);
+app.use('/api/ai', aiRoutes);
 
 // --- ROUTES ---
 
 // 1. Posts
-app.get('/api/posts', async (req, res) => {
-    const posts = await prisma.post.findMany({ orderBy: { createdAt: 'desc' } });
+app.get('/api/posts', authenticateToken, async (req, res) => {
+    const userId = (req as AuthRequest).user!.userId;
+    const posts = await prisma.post.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' }
+    });
     const parsedPosts = posts.map(p => ({
         ...p,
         images: JSON.parse(p.images)
@@ -48,21 +56,28 @@ app.get('/api/posts', async (req, res) => {
     res.json(parsedPosts);
 });
 
-app.post('/api/posts', async (req, res) => {
+app.post('/api/posts', authenticateToken, async (req, res) => {
+    const userId = (req as AuthRequest).user!.userId;
     const { images, ...data } = req.body;
     const post = await prisma.post.create({
         data: {
             ...data,
-            images: JSON.stringify(images)
+            images: JSON.stringify(images),
+            userId
         }
     });
     res.json({ ...post, images: JSON.parse(post.images) });
 });
 
 // General Update
-app.put('/api/posts/:id', async (req, res) => {
-    const { id } = req.params;
+app.put('/api/posts/:id', authenticateToken, async (req, res) => {
+    const userId = (req as AuthRequest).user!.userId;
+    const { id } = req.params as { id: string };
     const { images, ...data } = req.body;
+
+    // Check ownership
+    const existing = await prisma.post.findFirst({ where: { id, userId } });
+    if (!existing) return res.status(404).json({ error: 'Post not found or unauthorized' });
 
     // If updating images, stringify them
     const updateData: any = { ...data };
@@ -78,9 +93,14 @@ app.put('/api/posts/:id', async (req, res) => {
 });
 
 // Status Update (Legacy support if needed, or use the one above)
-app.put('/api/posts/:id/status', async (req, res) => {
-    const { id } = req.params;
+app.put('/api/posts/:id/status', authenticateToken, async (req, res) => {
+    const userId = (req as AuthRequest).user!.userId;
+    const { id } = req.params as { id: string };
     const { status, publishedAt } = req.body;
+
+    const existing = await prisma.post.findFirst({ where: { id, userId } });
+    if (!existing) return res.status(404).json({ error: 'Post not found or unauthorized' });
+
     const post = await prisma.post.update({
         where: { id },
         data: { status, publishedAt }
@@ -88,19 +108,30 @@ app.put('/api/posts/:id/status', async (req, res) => {
     res.json(post);
 });
 
-app.delete('/api/posts/:id', async (req, res) => {
-    const { id } = req.params;
+app.delete('/api/posts/:id', authenticateToken, async (req, res) => {
+    const userId = (req as AuthRequest).user!.userId;
+    const { id } = req.params as { id: string };
+
+    const existing = await prisma.post.findFirst({ where: { id, userId } });
+    if (!existing) return res.status(404).json({ error: 'Post not found or unauthorized' });
+
     await prisma.post.delete({ where: { id } });
     res.json({ success: true });
 });
 
 // Publish Now Endpoint
-app.post('/api/posts/:id/publish', async (req, res) => {
-    const { id } = req.params;
+app.post('/api/posts/:id/publish', authenticateToken, async (req, res) => {
+    const userId = (req as AuthRequest).user!.userId;
+    const { id } = req.params as { id: string };
 
     try {
         let post = await prisma.post.findUnique({ where: { id } });
         if (!post) return res.status(404).json({ error: 'Post not found' });
+
+        // Ownership check
+        if (post.userId !== userId) {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
 
         const account = await prisma.account.findUnique({ where: { id: post.accountId } });
         if (!account) return res.status(404).json({ error: 'Account not found' });
@@ -147,8 +178,9 @@ app.post('/api/posts/:id/publish', async (req, res) => {
 });
 
 // 2. Accounts
-app.get('/api/accounts', async (req, res) => {
-    const accounts = await prisma.account.findMany();
+app.get('/api/accounts', authenticateToken, async (req, res) => {
+    const userId = (req as AuthRequest).user!.userId;
+    const accounts = await prisma.account.findMany({ where: { userId } });
     const parsedAccounts = accounts.map(a => {
         const originalResponse = JSON.parse(a.originalResponse);
         return {
@@ -161,7 +193,8 @@ app.get('/api/accounts', async (req, res) => {
     res.json(parsedAccounts);
 });
 
-app.post('/api/accounts', async (req, res) => {
+app.post('/api/accounts', authenticateToken, async (req, res) => {
+    const userId = (req as AuthRequest).user!.userId;
     const { originalResponse, pageId, igUserId, lastSync, tokenExpiresAt, ...data } = req.body;
 
     // Store pageId and igUserId inside originalResponse for later retrieval
@@ -175,7 +208,8 @@ app.post('/api/accounts', async (req, res) => {
         data: {
             ...data,
             tokenExpiresAt,
-            originalResponse: JSON.stringify(enrichedResponse)
+            originalResponse: JSON.stringify(enrichedResponse),
+            userId
         }
     });
     res.json({
@@ -186,19 +220,36 @@ app.post('/api/accounts', async (req, res) => {
     });
 });
 
-app.delete('/api/accounts/:id', async (req, res) => {
-    const { id } = req.params;
+app.delete('/api/accounts/:id', authenticateToken, async (req, res) => {
+    const userId = (req as AuthRequest).user!.userId;
+    const { id } = req.params as { id: string };
+
+    const existing = await prisma.account.findFirst({ where: { id, userId } });
+    if (!existing) return res.status(404).json({ error: 'Account not found or unauthorized' });
+
     await prisma.account.delete({ where: { id } });
     res.json({ success: true });
 });
 
 // 3. Settings
-app.get('/api/settings', async (req, res) => {
+// Settings are global for now OR should be per user if we are multi-tenant? 
+// The initial request said "just only see and edit THEIR posts and accounts". 
+// Usually settings like App ID / Secret are global (SaaS owner settings), OR per user (if they bring their own keys).
+// Assuming single-instance SaaS where the ADMIN sets the keys, and users use them.
+// So we might keep settings unprotected OR protect it so only logged checks, but for now let's protect it but allow shared access?
+// Or maybe specific user role?
+// For now, let's keep settings as is, maybe protecting it so at least you need to be logged in to see API keys (security), 
+// but we didn't specify multi-tenant settings in the plan.
+// Actually, if it's "SaaS", usually the platform provides the keys. 
+// Let's protect GET/POST settings so random internet people can't change keys.
+// But we won't filter by userId as the Schema doesn't have userId on Settings.
+
+app.get('/api/settings', authenticateToken, async (req, res) => {
     const settings = await prisma.settings.findFirst();
     res.json(settings || { appId: '', appSecret: '' });
 });
 
-app.post('/api/settings', async (req, res) => {
+app.post('/api/settings', authenticateToken, async (req, res) => {
     const { appId, appSecret, token, cloudinaryCloudName, cloudinaryUploadPreset } = req.body;
     const existing = await prisma.settings.findFirst();
 
