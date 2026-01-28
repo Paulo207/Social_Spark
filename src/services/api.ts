@@ -145,7 +145,7 @@ export const checkBackendConnection = async (): Promise<boolean> => {
 
 export const generateCaption = async (topic: string, platform: 'instagram' | 'facebook' | 'both'): Promise<string> => {
     const VITE_API_URL = import.meta.env.VITE_API_URL;
-    const API_BASE = VITE_API_URL ? `${VITE_API_URL}/api` : 'http://localhost:3000/api';
+    const API_BASE = VITE_API_URL ? `${VITE_API_URL}/api` : 'http://localhost:5000/api';
 
     const token = localStorage.getItem('token');
     const headers: HeadersInit = { 'Content-Type': 'application/json' };
