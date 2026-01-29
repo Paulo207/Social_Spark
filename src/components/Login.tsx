@@ -7,7 +7,6 @@ import { Label } from './ui/label';
 import { ShieldCheck, Mail, Lock, User as UserIcon, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import PhoneInput from 'react-phone-number-input';
-import 'react-phone-number-input/style.css';
 
 interface LoginProps {
     onLogin: (identifier: string, password: string) => Promise<boolean>;
@@ -21,7 +20,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onRegister, onLoginGuest 
 
     // Form States
     const [email, setEmail] = useState('');
-    const [phone, setPhone] = useState<string | undefined>('');
+    const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
 
@@ -176,15 +175,15 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onRegister, onLoginGuest 
 
                                 <div className="space-y-2">
                                     <Label htmlFor="reg-phone">Telefone (Opcional)</Label>
-                                    <PhoneInput
-                                        id="reg-phone"
-                                        international
-                                        defaultCountry="BR"
-                                        value={phone}
-                                        onChange={setPhone}
-                                        className="phone-input-custom"
-                                        placeholder="Digite seu telefone"
-                                    />
+                                    <div className="phone-input-custom">
+                                        <PhoneInput
+                                            international
+                                            defaultCountry="BR"
+                                            value={phone}
+                                            onChange={setPhone}
+                                            placeholder="Digite seu telefone"
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="space-y-2">
