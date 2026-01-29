@@ -4,8 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { ShieldCheck, Mail, Lock, Phone, User as UserIcon, Loader2 } from 'lucide-react';
+import { ShieldCheck, Mail, Lock, User as UserIcon, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 
 interface LoginProps {
     onLogin: (identifier: string, password: string) => Promise<boolean>;
@@ -19,7 +21,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onRegister, onLoginGuest 
 
     // Form States
     const [email, setEmail] = useState('');
-    const [phone, setPhone] = useState('');
+    const [phone, setPhone] = useState<string | undefined>('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
 
@@ -174,16 +176,15 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onRegister, onLoginGuest 
 
                                 <div className="space-y-2">
                                     <Label htmlFor="reg-phone">Telefone (Opcional)</Label>
-                                    <div className="relative">
-                                        <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                        <Input
-                                            id="reg-phone"
-                                            placeholder="+55..."
-                                            className="pl-9"
-                                            value={phone}
-                                            onChange={(e) => setPhone(e.target.value)}
-                                        />
-                                    </div>
+                                    <PhoneInput
+                                        id="reg-phone"
+                                        international
+                                        defaultCountry="BR"
+                                        value={phone}
+                                        onChange={setPhone}
+                                        className="phone-input-custom"
+                                        placeholder="Digite seu telefone"
+                                    />
                                 </div>
 
                                 <div className="space-y-2">
