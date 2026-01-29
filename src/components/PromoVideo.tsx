@@ -23,6 +23,19 @@ export const PromoVideo: React.FC = () => {
         video.addEventListener('durationchange', handleDurationChange);
         video.addEventListener('ended', handleEnded);
 
+        // Autoplay when component mounts
+        const playVideo = async () => {
+            try {
+                await video.play();
+                setIsPlaying(true);
+            } catch (error) {
+                console.log('Autoplay prevented by browser:', error);
+                // Autoplay was prevented, user will need to click play
+            }
+        };
+
+        playVideo();
+
         return () => {
             video.removeEventListener('timeupdate', handleTimeUpdate);
             video.removeEventListener('durationchange', handleDurationChange);
@@ -110,6 +123,7 @@ export const PromoVideo: React.FC = () => {
                         ref={videoRef}
                         className="w-full h-full"
                         muted={isMuted}
+                        autoPlay
                         playsInline
                         onClick={handlePlayPause}
                     >
