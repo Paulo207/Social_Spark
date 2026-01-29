@@ -119,9 +119,17 @@ export const useAuth = () => {
         }
     };
 
-    const loginGuest = () => {
-        // Guest mode removed for SaaS production
-        console.warn("Guest login disabled for production");
+    const loginGuest = async () => {
+        try {
+            const guestId = Date.now();
+            const email = `guest${guestId}@socialspark.dev`; // Use a clear domain
+            const password = `guest${guestId}`; // Simple password
+            const name = `Visitante ${guestId.toString().slice(-4)}`;
+
+            await register(name, password, email);
+        } catch (error) {
+            console.error("Guest login failed", error);
+        }
     };
 
     const logout = () => {

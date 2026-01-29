@@ -136,8 +136,17 @@ export const PostList: React.FC<PostListProps> = ({ posts, onCreatePost, onEditP
                                             muted
                                             playsInline
                                             loop
-                                            onMouseOver={e => e.currentTarget.play()}
-                                            onMouseOut={e => e.currentTarget.pause()}
+                                            onMouseOver={e => {
+                                                const vid = e.currentTarget;
+                                                const playPromise = vid.play();
+                                                if (playPromise !== undefined) {
+                                                    playPromise.catch(() => { });
+                                                }
+                                            }}
+                                            onMouseOut={e => {
+                                                e.currentTarget.pause();
+                                                e.currentTarget.currentTime = 0;
+                                            }}
                                         />
                                     ) : (
                                         <img src={post.images[0]} alt="Post" />

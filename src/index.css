@@ -546,3 +546,254 @@ select:focus-visible {
   background: var(--color-primary-glow);
   color: var(--color-text-primary);
 }
+
+/* ============================================
+   3D UTILITIES & ADVANCED ANIMATIONS
+   ============================================ */
+
+/* 3D Variables */
+:root {
+  --perspective-near: 800px;
+  --perspective-mid: 1200px;
+  --perspective-far: 1600px;
+  --depth-1: translateZ(20px);
+  --depth-2: translateZ(40px);
+  --depth-3: translateZ(60px);
+  --depth-4: translateZ(80px);
+}
+
+/* 3D Transform Utilities */
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.perspective-near {
+  perspective: var(--perspective-near);
+}
+
+.perspective-mid {
+  perspective: var(--perspective-mid);
+}
+
+.perspective-far {
+  perspective: var(--perspective-far);
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+/* 3D Rotation Classes */
+.rotate-3d-x-5 {
+  transform: rotateX(5deg);
+}
+
+.rotate-3d-x-10 {
+  transform: rotateX(10deg);
+}
+
+.rotate-3d-y-5 {
+  transform: rotateY(5deg);
+}
+
+.rotate-3d-y-10 {
+  transform: rotateY(10deg);
+}
+
+.rotate-3d-y-12 {
+  transform: rotateY(12deg);
+}
+
+/* Glassmorphism Variants */
+.glass-light {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-medium {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.glass-heavy {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Custom 3D Utilities - Using @layer utilities for Tailwind integration */
+@layer utilities {
+
+  /* 3D Perspective and Transform Style */
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .perspective-near {
+    perspective: 500px;
+  }
+
+  .perspective-mid {
+    perspective: 1000px;
+  }
+
+  .perspective-far {
+    perspective: 1500px;
+  }
+
+  /* 3D Card Effects */
+  .card-3d {
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .card-3d:hover {
+    transform: rotateY(10deg) rotateX(-5deg) translateZ(20px);
+  }
+
+  .card-3d-flip {
+    transform-style: preserve-3d;
+    transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .card-3d-flip:hover {
+    transform: rotateY(180deg);
+  }
+
+  /* Depth Shadows */
+  .shadow-3d-sm {
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.1),
+      0 4px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .shadow-3d-md {
+    box-shadow:
+      0 4px 8px rgba(0, 0, 0, 0.12),
+      0 8px 16px rgba(0, 0, 0, 0.08),
+      0 12px 24px rgba(0, 0, 0, 0.04);
+  }
+
+  .shadow-3d-lg {
+    box-shadow:
+      0 8px 16px rgba(0, 0, 0, 0.15),
+      0 16px 32px rgba(0, 0, 0, 0.1),
+      0 24px 48px rgba(0, 0, 0, 0.05);
+  }
+
+  .shadow-3d-xl {
+    box-shadow:
+      0 12px 24px rgba(0, 0, 0, 0.18),
+      0 24px 48px rgba(0, 0, 0, 0.12),
+      0 36px 72px rgba(0, 0, 0, 0.08);
+  }
+
+  /* Colored Glow Shadows */
+  .shadow-glow-purple {
+    box-shadow: 0 10px 40px rgba(168, 85, 247, 0.3);
+  }
+
+  .shadow-glow-pink {
+    box-shadow: 0 10px 40px rgba(236, 72, 153, 0.3);
+  }
+
+  .shadow-glow-blue {
+    box-shadow: 0 10px 40px rgba(59, 130, 246, 0.3);
+  }
+
+  .shadow-glow-cyan {
+    box-shadow: 0 10px 40px rgba(6, 182, 212, 0.3);
+  }
+
+  /* Hover Lift Effect */
+  .hover-lift {
+    transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.3s ease;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-8px) translateZ(10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Parallax Layers */
+  .parallax-layer {
+    transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .parallax-layer-1 {
+    transform: translateZ(10px);
+  }
+
+  .parallax-layer-2 {
+    transform: translateZ(20px);
+  }
+
+  .parallax-layer-3 {
+    transform: translateZ(30px);
+  }
+
+  /* Reflection Effect */
+  .reflection {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .reflection::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent);
+    transition: left 0.5s ease;
+  }
+
+  .reflection:hover::after {
+    left: 100%;
+  }
+
+  /* Metallic Effect */
+  .metallic {
+    background: linear-gradient(135deg,
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0.05) 25%,
+        rgba(0, 0, 0, 0.05) 50%,
+        rgba(255, 255, 255, 0.05) 75%,
+        rgba(255, 255, 255, 0.1) 100%);
+  }
+
+  /* Stagger Animation Delays */
+  .delay-100 {
+    animation-delay: 100ms;
+  }
+
+  .delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .delay-300 {
+    animation-delay: 300ms;
+  }
+
+  .delay-500 {
+    animation-delay: 500ms;
+  }
+
+  /* Shimmer effect with background */
+  .animate-shimmer {
+    background: linear-gradient(90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.1) 50%,
+        rgba(255, 255, 255, 0) 100%);
+    background-size: 1000px 100%;
+  }
+}

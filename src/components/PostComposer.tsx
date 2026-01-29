@@ -54,7 +54,7 @@ export const PostComposer: React.FC<PostComposerProps> = ({
 }) => {
     const [caption, setCaption] = useState(editPost?.caption || '');
     const [images, setImages] = useState<string[]>(editPost?.images || []);
-    const [platform, setPlatform] = useState<Platform>(editPost?.platform || 'both');
+    const [platform, setPlatform] = useState<Platform>(editPost?.platform === 'both' ? 'instagram' : (editPost?.platform || 'instagram'));
     const [accountId, setAccountId] = useState(editPost?.accountId || accounts[0]?.id || '');
     const [scheduledDate, setScheduledDate] = useState(
         editPost?.scheduledDate ? format(editPost.scheduledDate, "yyyy-MM-dd'T'HH:mm") : ''
@@ -299,23 +299,26 @@ export const PostComposer: React.FC<PostComposerProps> = ({
                         <div className="space-y-6">
                             {/* Media Upload */}
                             <div className="space-y-2">
-                                <Label>Mídia (Foto ou Vídeo)</Label>
-                                <div className="border-2 border-dashed rounded-lg p-6 text-center hover:bg-muted/50 transition-colors relative">
+                                <Label className="block mb-3 text-base">Mídia (Foto ou Vídeo)</Label>
+                                <div className="border-2 border-dashed border-slate-600 bg-slate-900/50 rounded-xl p-8 text-center hover:bg-slate-800/50 hover:border-purple-500 transition-all duration-300 relative group cursor-pointer">
                                     <input
                                         type="file"
                                         accept="image/*,video/*"
                                         multiple
                                         onChange={handleMediaUpload}
-                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                     />
-                                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                                        <div className="p-3 bg-secondary rounded-full">
-                                            <div className="flex gap-1">
-                                                <ImageIcon size={20} className="text-primary" />
-                                                <Video size={20} className="text-primary" />
+                                    <div className="flex flex-col items-center gap-4 text-muted-foreground group-hover:text-white transition-colors">
+                                        <div className="p-4 bg-slate-800 rounded-full group-hover:bg-purple-500/20 group-hover:scale-110 transition-all duration-300 ring-1 ring-slate-700 group-hover:ring-purple-500/50">
+                                            <div className="flex gap-2">
+                                                <ImageIcon size={24} className="text-purple-400 group-hover:text-purple-300" />
+                                                <Video size={24} className="text-pink-400 group-hover:text-pink-300" />
                                             </div>
                                         </div>
-                                        <p className="text-sm font-medium">Clique ou arraste fotos ou vídeos aqui</p>
+                                        <div className="space-y-1">
+                                            <p className="text-base font-semibold">Clique ou arraste fotos e vídeos</p>
+                                            <p className="text-xs text-slate-400">Suporta JPG, PNG, MP4 (Max 50MB)</p>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -449,18 +452,6 @@ export const PostComposer: React.FC<PostComposerProps> = ({
                                         className="flex-1 gap-2"
                                     >
                                         <Facebook size={18} /> Facebook
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant={platform === 'both' ? 'default' : 'outline'}
-                                        onClick={() => setPlatform('both')}
-                                        className="flex-1 gap-2"
-                                    >
-                                        <div className="flex gap-1">
-                                            <Instagram size={16} />
-                                            <Facebook size={16} />
-                                        </div>
-                                        Ambos
                                     </Button>
                                 </div>
                             </div>

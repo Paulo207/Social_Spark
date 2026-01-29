@@ -213,6 +213,8 @@ model User {
   name       String
   accounts   Account[]
   posts      Post[]
+  conversations Conversation[]
+  mediaAssets MediaAsset[]
   createdAt  DateTime  @default(now())
   role       String    @default("user") // "user" or "developer"
 }
@@ -225,3 +227,96 @@ model Settings {
   cloudinaryCloudName String?
   cloudinaryUploadPreset String?
 }
+
+model MediaAsset {
+  id              String    @id @default(uuid())
+  userId          String
+  url             String    // Cloudinary URL
+  publicId        String    // Cloudinary public_id for deletion
+  resourceType    String    // image or video
+  fileType        String    // mime type
+  fileSize        Int       // bytes
+  width           Int?
+  height          Int?
+  duration        Float?    // for videos (seconds)
+  
+  // AI-generated metadata
+  aiCaption       String?   @db.Text
+  aiHashtags      String?   // JSON array of hashtags
+  aiAnalysis      String?   @db.Text // JSON with detailed AI analysis
+  
+  // User metadata
+  userCaption     String?   @db.Text
+  userTags        String?   // JSON array of user tags
+  description     String?   @db.Text
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([createdAt])
+}
+
+
+// --- AI SUPPORT SYSTEM MODELS ---
+
+model Conversation {
+  id          String    @id @default(uuid())
+  userId      String?
+  sessionId   String    // For anonymous users
+  startedAt   DateTime  @default(now())
+  lastMessageAt DateTime @default(now())
+  status      String    @default("active") // active, resolved, archived
+  
+  user        User?     @relation(fields: [userId], references: [id])
+  messages    Message[]
+  
+  @@index([userId])
+  @@index([sessionId])
+}
+
+model Message {
+  id              String       @id @default(uuid())
+  conversationId  String
+  role            String       // user, assistant
+  content         String       @db.Text
+  aiProvider      String?      // openai, gemini, claude, perplexity
+  context         String?      @db.Text // JSON string of context used
+  timestamp       DateTime     @default(now())
+  
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  feedback        Feedback?
+  
+  @@index([conversationId])
+}
+
+model Feedback {
+  id          String   @id @default(uuid())
+  messageId   String   @unique
+  rating      Int      // 1 (thumbs down) or 5 (thumbs up)
+  comment     String?  @db.Text
+  createdAt   DateTime @default(now())
+  
+  message     Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  
+  @@index([rating])
+}
+
+model KnowledgeBase {
+  id          String   @id @default(uuid())
+  category    String   // billing, features, technical, integrations, etc.
+  question    String   @db.Text
+  answer      String   @db.Text
+  keywords    String   // JSON array of keywords
+  successRate Float    @default(0) // 0-100
+  timesUsed   Int      @default(0)
+  source      String   @default("manual") // manual, learned, ai-generated
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([category])
+  @@index([successRate])
+}
+

@@ -151,11 +151,32 @@ export const Dashboard: React.FC<DashboardProps> = ({ posts, onCreatePost }) => 
                             {recentPosts.map(post => (
                                 <div key={post.id} className="post-item glass-hover">
                                     {post.images[0] && (
-                                        <img
-                                            src={post.images[0]}
-                                            alt="Post preview"
-                                            className="post-thumbnail"
-                                        />
+                                        (post.images[0].match(/\.(mp4|mov|avi|wmv)$/i) || post.images[0].startsWith('data:video')) ? (
+                                            <video
+                                                src={post.images[0]}
+                                                className="post-thumbnail object-cover"
+                                                muted
+                                                playsInline
+                                                loop
+                                                onMouseOver={e => {
+                                                    const vid = e.currentTarget;
+                                                    const playPromise = vid.play();
+                                                    if (playPromise !== undefined) {
+                                                        playPromise.catch(() => { });
+                                                    }
+                                                }}
+                                                onMouseOut={e => {
+                                                    e.currentTarget.pause();
+                                                    e.currentTarget.currentTime = 0;
+                                                }}
+                                            />
+                                        ) : (
+                                            <img
+                                                src={post.images[0]}
+                                                alt="Post preview"
+                                                className="post-thumbnail"
+                                            />
+                                        )
                                     )}
                                     <div className="post-info">
                                         <p className="post-caption">{post.caption.slice(0, 80)}...</p>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Calendar, FileText, Users, Settings, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, Calendar, FileText, Users, Settings, Sun, Moon, ListTodo, Image } from 'lucide-react';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -14,6 +14,8 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isDarkMode, onToggleTheme, user, onLogout }) => {
     const menuItems = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'workflow', label: 'Workflow', icon: ListTodo },
+        { id: 'media-library', label: 'Biblioteca de Mídia', icon: Image },
         { id: 'calendar', label: 'Calendário', icon: Calendar },
         { id: 'posts', label: 'Postagens', icon: FileText },
         { id: 'accounts', label: 'Contas', icon: Users },

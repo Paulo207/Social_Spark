@@ -14,6 +14,8 @@ dotenv.config();
 import authRoutes from './routes/auth';
 import uploadRoutes from './routes/upload';
 import aiRoutes from './routes/ai';
+import supportRoutes from './routes/supportRoutes';
+import mediaRoutes from './routes/media';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -39,6 +41,9 @@ app.use((req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api', uploadRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/support', supportRoutes);
+app.use('/api/media', mediaRoutes);
+
 
 // --- ROUTES ---
 
@@ -134,7 +139,12 @@ app.post('/api/posts/:id/publish', authenticateToken, async (req, res) => {
         }
 
         const account = await prisma.account.findUnique({ where: { id: post.accountId } });
-        if (!account) return res.status(404).json({ error: 'Account not found' });
+        if (!account) {
+            console.error(`[Publish] Account ${post.accountId} not found for post ${id}`);
+            return res.status(404).json({ error: 'Account not found' });
+        }
+
+        console.log(`[Publish] Publishing post ${id} to ${account.platform} (Account: ${account.username})`);
 
         const settings = await prisma.settings.findFirst();
 

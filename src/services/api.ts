@@ -167,3 +167,163 @@ export const generateCaption = async (topic: string, platform: 'instagram' | 'fa
     const data = await response.json();
     return data.caption;
 };
+
+// --- MEDIA LIBRARY ---
+const getApiBase = () => {
+    const VITE_API_URL = import.meta.env.VITE_API_URL;
+    return VITE_API_URL ? `${VITE_API_URL}/api` : 'http://localhost:5000/api';
+};
+
+const getAuthHeaders = (): HeadersInit => {
+    const token = localStorage.getItem('token');
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+};
+
+export const getMediaAssets = async (page: number = 1, limit: number = 20): Promise<import('../types').MediaListResponse> => {
+    const API_BASE = getApiBase();
+    const headers = getAuthHeaders();
+
+    const response = await fetch(`${API_BASE}/media?page=${page}&limit=${limit}`, {
+        headers
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to fetch media assets');
+    }
+
+    const data = await response.json();
+
+    // Parse date strings to Date objects
+    data.assets = data.assets.map((asset: any) => ({
+        ...asset,
+        createdAt: new Date(asset.createdAt),
+        updatedAt: new Date(asset.updatedAt)
+    }));
+
+    return data;
+};
+
+export const getMediaAsset = async (id: string): Promise<import('../types').MediaAsset> => {
+    const API_BASE = getApiBase();
+    const headers = getAuthHeaders();
+
+    const response = await fetch(`${API_BASE}/media/${id}`, {
+        headers
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to fetch media asset');
+    }
+
+    const asset = await response.json();
+    return {
+        ...asset,
+        createdAt: new Date(asset.createdAt),
+        updatedAt: new Date(asset.updatedAt)
+    };
+};
+
+export const uploadMediaAsset = async (file: File, generateAI: boolean = true): Promise<import('../types').MediaUploadResponse> => {
+    const API_BASE = getApiBase();
+    const headers = getAuthHeaders();
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('generateAI', generateAI.toString());
+
+    console.log(`[API] Uploading media asset to library...`);
+
+    const response = await fetch(`${API_BASE}/media`, {
+        method: 'POST',
+        headers,
+        body: formData
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to upload media asset');
+    }
+
+    const data = await response.json();
+    data.asset.createdAt = new Date(data.asset.createdAt);
+    data.asset.updatedAt = new Date(data.asset.updatedAt);
+
+    return data;
+};
+
+export const generateAIMetadata = async (assetId: string, platform: 'instagram' | 'facebook' | 'both' = 'both'): Promise<import('../types').MediaAsset> => {
+    const API_BASE = getApiBase();
+    const headers = {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+    };
+
+    const response = await fetch(`${API_BASE}/media/${assetId}/generate-ai`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ platform })
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to generate AI metadata');
+    }
+
+    const asset = await response.json();
+    return {
+        ...asset,
+        createdAt: new Date(asset.createdAt),
+        updatedAt: new Date(asset.updatedAt)
+    };
+};
+
+export const updateMediaAsset = async (
+    id: string,
+    data: { userCaption?: string; userTags?: string[]; description?: string }
+): Promise<import('../types').MediaAsset> => {
+    const API_BASE = getApiBase();
+    const headers = {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+    };
+
+    const response = await fetch(`${API_BASE}/media/${id}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update media asset');
+    }
+
+    const asset = await response.json();
+    return {
+        ...asset,
+        createdAt: new Date(asset.createdAt),
+        updatedAt: new Date(asset.updatedAt)
+    };
+};
+
+export const deleteMediaAsset = async (id: string): Promise<void> => {
+    const API_BASE = getApiBase();
+    const headers = getAuthHeaders();
+
+    const response = await fetch(`${API_BASE}/media/${id}`, {
+        method: 'DELETE',
+        headers
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete media asset');
+    }
+};
+
