@@ -3,6 +3,8 @@ import { KanbanBoard } from '../components/KanbanBoard';
 import type { Post, PostStatus } from '../types';
 import { Loader2, Plus, ListTodo } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 export const ContentWorkflow: React.FC = () => {
     const [posts, setPosts] = useState<Post[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -15,7 +17,7 @@ export const ContentWorkflow: React.FC = () => {
     const fetchPosts = async () => {
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/posts`, {
+            const res = await fetch(`${API_URL}/api/posts`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -41,7 +43,7 @@ export const ContentWorkflow: React.FC = () => {
 
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/posts/${postId}/status`, {
+            const res = await fetch(`${API_URL}/api/posts/${postId}/status`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

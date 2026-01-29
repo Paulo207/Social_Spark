@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, X, Send, ThumbsUp, ThumbsDown, Bot, User, Loader2, Sparkles } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 interface Message {
     id: string;
     role: 'user' | 'assistant';
@@ -35,7 +37,7 @@ export const AIChatWidget: React.FC = () => {
 
             try {
                 // Start or resume conversation
-                const res = await fetch(`${import.meta.env.VITE_API_URL}/api/support/start`, {
+                const res = await fetch(`${API_URL}/api/support/start`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ userId, sessionId })
@@ -45,7 +47,7 @@ export const AIChatWidget: React.FC = () => {
                 setConversationId(data.id);
 
                 // Load history
-                const historyRes = await fetch(`${import.meta.env.VITE_API_URL}/api/support/history/${data.id}`);
+                const historyRes = await fetch(`${API_URL}/api/support/history/${data.id}`);
                 const history = await historyRes.json();
 
                 setMessages(history.map((msg: any) => ({
@@ -87,7 +89,7 @@ export const AIChatWidget: React.FC = () => {
             const userStr = localStorage.getItem('user');
             const userId = userStr ? JSON.parse(userStr).id : undefined;
 
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/support/chat`, {
+            const res = await fetch(`${API_URL}/api/support/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -132,7 +134,7 @@ export const AIChatWidget: React.FC = () => {
                 msg.id === messageId ? { ...msg, feedback: { rating } } : msg
             ));
 
-            await fetch(`${import.meta.env.VITE_API_URL}/api/support/feedback`, {
+            await fetch(`${API_URL}/api/support/feedback`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ messageId, rating })
