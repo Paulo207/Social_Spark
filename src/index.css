@@ -1,9 +1,9 @@
+/* React Phone Number Input Styles */
+@import 'react-phone-number-input/style.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* React Phone Number Input Styles */
-@import 'react-phone-number-input/style.css';
 
 @layer base {
   :root {
