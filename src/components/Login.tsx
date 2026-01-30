@@ -64,7 +64,9 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onRegister, onLoginGuest 
         }
 
         try {
-            const success = await onRegister(name, password, email, phone);
+            // Convert phone to string or undefined
+            const phoneValue = phone || undefined;
+            const success = await onRegister(name, password, email, phoneValue);
             if (!success) {
                 setError('Falha ao cadastrar. Verifique os dados ou tente outro email/telefone.');
             }
