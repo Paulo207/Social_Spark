@@ -6,7 +6,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { ShieldCheck, Mail, Lock, User as UserIcon, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import PhoneInput from 'react-phone-number-input';
+import PhoneInput, { type E164Number } from 'react-phone-number-input';
 
 interface LoginProps {
     onLogin: (identifier: string, password: string) => Promise<boolean>;
@@ -20,7 +20,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onRegister, onLoginGuest 
 
     // Form States
     const [email, setEmail] = useState('');
-    const [phone, setPhone] = useState('');
+    const [phone, setPhone] = useState<E164Number | undefined>();
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
 
